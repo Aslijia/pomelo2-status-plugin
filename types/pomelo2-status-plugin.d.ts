@@ -1,7 +1,7 @@
 
 
 export interface StatusService {
-    clean(cb: Function);
+    clean(cb: Function): void;
 
     add(uid: string, sid: string): Promise<any>;
     leave(uid: string, sid: string): Promise<any>;

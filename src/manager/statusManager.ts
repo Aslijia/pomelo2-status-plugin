@@ -5,8 +5,10 @@ import { uniq } from 'lodash';
 import { invokeCallback } from "../util/utils";
 
 declare interface Application {
-
-}
+    get(key: string): any;
+    set(...args: any[]): any;
+  }
+  
 
 enum STATE {
     ST_INITED = 0,
@@ -20,7 +22,7 @@ export class StatusManager {
 
     host: string;
     port: number;
-    redis: RedisClient;
+    redis: RedisClient | undefined;
 
     prefix: string;
     constructor(app: Application, opts: any) {
@@ -45,18 +47,23 @@ export class StatusManager {
     stop(force: boolean, cb: Function) {
         if (this.redis) {
             this.redis.end();
-            this.redis = null;
+            this.redis = undefined;
         }
         invokeCallback(cb);
     };
 
     clean(cb: Function) {
-        var cmds = [];
-        this.redis.keys(`${this.prefix}*`, (err: Error, list: string[]) => {
-            if (!!err) {
+        if (!this.redis) {
+            return invokeCallback(cb, new Error('redis gone'));
+        }
+
+        const cmds: any[] = [];
+        this.redis.keys(`${this.prefix}*`, (err: Error | null, list: string[]) => {
+            if (!!err || !this.redis) {
                 invokeCallback(cb, err);
                 return;
             }
+
             for (var i = 0; i < list.length; i++) {
                 cmds.push(['del', list[i]]);
             }
@@ -68,22 +75,43 @@ export class StatusManager {
     };
 
     async exists(uid: string) {
-        return promisify(this.redis.exists.bind(this.redis))(`${this.prefix}:${uid}`);
+        if (!this.redis) {
+            throw new Error('redis gone');
+        }
+
+        return promisify(this.redis.exists.bind(this.redis, `${this.prefix}:${uid}`))();
     }
 
     async add(uid: string, sid: string, frontendId: string) {
+        if (!this.redis) {
+            throw new Error('redis gone');
+        }
         return promisify(this.redis.hset.bind(this.redis))(`${this.prefix}:${uid}`, sid, frontendId);
     };
 
     async leave(uid: string, sid: string) {
-        return promisify(this.redis.hdel.bind(this.redis))(`${this.prefix}:${uid}`, sid);
+        if (!this.redis) {
+            throw new Error('redis gone');
+        }
+        const hdel = promisify(this.redis.hdel.bind(this.redis));
+        //@ts-ignore
+        return await hdel(`${this.prefix}:${uid}`, sid);
     }
 
     async getSidsByUid(uid: string): Promise<string[]> {
-        return await promisify(this.redis.hkeys.bind(this.redis))(`${this.prefix}:${uid}`);
+        if (!this.redis) {
+            throw new Error('redis gone');
+        }
+        const hkeys = promisify(this.redis.hkeys.bind(this.redis));
+
+        return await hkeys(`${this.prefix}:${uid}`);
     };
 
     async getFrontedIdsByUid(uid: string): Promise<string[]> {
+        if (!this.redis) {
+            throw new Error('redis gone');
+        }
+
         const arrays = await promisify(this.redis.hvals.bind(this.redis))(`${this.prefix}:${uid}`);
         if (arrays && arrays.length) {
             return uniq(arrays);
