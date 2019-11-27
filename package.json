@@ -1,11 +1,13 @@
 {
   "name": "pomelo2-status-plugin",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
+  "files": [
+    "lib",
+    "types",
+    "index.js"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,8 +23,13 @@
   },
   "homepage": "https://github.com/Aslijia/pomelo2-status-plugin#readme",
   "dependencies": {
-    "pomelo2-logger": "^1.0.1",
+    "lodash": "^4.17.15",
     "redis": "^2.8.0"
   },
-  "types": "./types/pomelo2-status-plugin.d.ts"
+  "types": "./types/pomelo2-status-plugin.d.ts",
+  "devDependencies": {
+    "@types/lodash": "^4.14.149",
+    "@types/node": "^12.12.14",
+    "@types/redis": "^2.8.14"
+  }
 }
