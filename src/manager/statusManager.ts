@@ -7,8 +7,8 @@ import { invokeCallback } from "../util/utils";
 declare interface Application {
     get(key: string): any;
     set(...args: any[]): any;
-  }
-  
+}
+
 
 enum STATE {
     ST_INITED = 0,
@@ -57,20 +57,23 @@ export class StatusManager {
             return invokeCallback(cb, new Error('redis gone'));
         }
 
-        const cmds: any[] = [];
-        this.redis.keys(`${this.prefix}*`, (err: Error | null, list: string[]) => {
+        const cmds: string[] = [];
+        this.redis.keys(`{${this.prefix}}*`, (err: Error | null, list: string[]) => {
             if (!!err || !this.redis) {
                 invokeCallback(cb, err);
                 return;
             }
 
             for (var i = 0; i < list.length; i++) {
-                cmds.push(['del', list[i]]);
+                cmds.push(list[i]);
             }
-
-            this.redis.multi(cmds).exec(function (err, replies) {
-                invokeCallback(cb, err, replies);
-            });
+            if (cmds.length) {
+                this.redis.del(cmds, function (err, replies) {
+                    invokeCallback(cb, err, replies);
+                });
+            } else {
+                invokeCallback(cb, null, 0);
+            }
         });
     };
 
@@ -79,14 +82,14 @@ export class StatusManager {
             throw new Error('redis gone');
         }
 
-        return promisify(this.redis.exists.bind(this.redis, `${this.prefix}:${uid}`))();
+        return promisify(this.redis.exists.bind(this.redis, `{${this.prefix}}:${uid}`))();
     }
 
     async add(uid: string, sid: string, frontendId: string) {
         if (!this.redis) {
             throw new Error('redis gone');
         }
-        return promisify(this.redis.hset.bind(this.redis))(`${this.prefix}:${uid}`, sid, frontendId);
+        return promisify(this.redis.hset.bind(this.redis))(`{${this.prefix}}:${uid}`, sid, frontendId);
     };
 
     async leave(uid: string, sid: string) {
@@ -95,7 +98,7 @@ export class StatusManager {
         }
         const hdel = promisify(this.redis.hdel.bind(this.redis));
         //@ts-ignore
-        return await hdel(`${this.prefix}:${uid}`, sid);
+        return await hdel(`{${this.prefix}}:${uid}`, sid);
     }
 
     async getSidsByUid(uid: string): Promise<string[]> {
@@ -104,7 +107,7 @@ export class StatusManager {
         }
         const hkeys = promisify(this.redis.hkeys.bind(this.redis));
 
-        return await hkeys(`${this.prefix}:${uid}`);
+        return await hkeys(`{${this.prefix}}:${uid}`);
     };
 
     async getFrontedIdsByUid(uid: string): Promise<string[]> {
@@ -112,7 +115,7 @@ export class StatusManager {
             throw new Error('redis gone');
         }
 
-        const arrays = await promisify(this.redis.hvals.bind(this.redis))(`${this.prefix}:${uid}`);
+        const arrays = await promisify(this.redis.hvals.bind(this.redis))(`{${this.prefix}}:${uid}`);
         if (arrays && arrays.length) {
             return uniq(arrays);
         }
