@@ -30,7 +30,7 @@ export class StatusManager {
         this.opts = opts;
         this.host = this.opts.host;
         this.port = this.opts.port;
-        this.prefix = `{${this.opts.prefix}}` || '{POMELO:STATUS}'
+        this.prefix = this.opts.prefix || '{POMELO:STATUS}.'
     }
 
     start(cb: (...args: any[]) => void) {
@@ -58,14 +58,14 @@ export class StatusManager {
         }
 
         const cmds: string[] = [];
-        this.redis.keys(`${this.prefix}*`, (err: Error | null, list: string[]) => {
+        this.redis.keys(`*`, (err: Error | null, list: string[]) => {
             if (!!err || !this.redis) {
                 invokeCallback(cb, err);
                 return;
             }
 
             for (var i = 0; i < list.length; i++) {
-                cmds.push(list[i]);
+                cmds.push(list[i].replace(this.prefix, ''));
             }
             if (cmds.length) {
                 this.redis.del(cmds, function (err, replies) {
