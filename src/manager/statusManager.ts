@@ -101,13 +101,19 @@ export class StatusManager {
         return await hdel(uid, sid);
     }
 
-    async getSidsByUid(uid: string): Promise<string[]> {
+    async getSidsByUid(uid: string): Promise<{ [fronedId: string]: string[] }> {
         if (!this.redis) {
             throw new Error('redis gone');
         }
-        const hkeys = promisify(this.redis.hkeys.bind(this.redis));
-
-        return await hkeys(uid);
+        const all = await promisify(this.redis.hgetall.bind(this.redis))(uid);
+        const kvs: { [fronedId: string]: string[] } = {};
+        for (let i in all) {
+            if (!kvs[all[i]]) {
+                kvs[all[i]] = [];
+            }
+            kvs[all[i]].push(i);
+        }
+        return kvs;
     };
 
     async getFrontedIdsByUid(uid: string): Promise<string[]> {
