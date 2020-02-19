@@ -58,7 +58,7 @@ export class StatusManager {
         }
 
         const cmds: string[] = [];
-        this.redis.keys(`*`, (err: Error | null, list: string[]) => {
+        this.redis.keys(`${this.prefix || ''}*`, (err: Error | null, list: string[]) => {
             if (!!err || !this.redis) {
                 invokeCallback(cb, err);
                 return;
