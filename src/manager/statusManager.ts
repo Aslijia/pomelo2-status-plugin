@@ -16,25 +16,22 @@ enum STATE {
     ST_CLOSED = 2
 }
 
+const DEFALT_PREFIX = '#POMELO-STATUS:';
+
 export class StatusManager {
     app: Application;
     opts: any;
-
-    host: string;
-    port: number;
     redis: RedisClient | undefined;
-
-    prefix: string;
     constructor(app: Application, opts: any) {
         this.app = app;
         this.opts = opts;
-        this.host = this.opts.host;
-        this.port = this.opts.port;
-        this.prefix = this.opts.prefix || '{POMELO:STATUS}.'
+        if (!this.opts.prefix) {
+            this.opts.prefix = DEFALT_PREFIX;
+        }
     }
 
     start(cb: (...args: any[]) => void) {
-        this.redis = createClient(this.port, this.host, this.opts);
+        this.redis = createClient(this.opts);
         if (this.opts.auth_pass) {
             this.redis.auth(this.opts.auth_pass);
         }
@@ -58,15 +55,16 @@ export class StatusManager {
         }
 
         const cmds: string[] = [];
-        this.redis.keys(`${this.prefix || ''}*`, (err: Error | null, list: string[]) => {
+        this.redis.keys(`${this.opts.prefix}*`, (err: Error | null, list: string[]) => {
             if (!!err || !this.redis) {
                 invokeCallback(cb, err);
                 return;
             }
 
             for (var i = 0; i < list.length; i++) {
-                cmds.push(list[i].replace(this.prefix, ''));
+                cmds.push(list[i].replace(this.opts.prefix, ''));
             }
+
             if (cmds.length) {
                 this.redis.del(cmds, function (err, replies) {
                     invokeCallback(cb, err, replies);
