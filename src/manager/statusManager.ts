@@ -53,22 +53,14 @@ export class StatusManager {
         if (!this.redis) {
             return invokeCallback(cb, new Error('redis gone'));
         }
-
-        const cmds: string[] = [];
-        this.redis.keys(`${this.opts.prefix}*`, (err: Error | null, list: string[]) => {
-            if (!!err || !this.redis) {
-                invokeCallback(cb, err);
-                return;
+        this.redis.hkeys('onlines', (err, uids) => {
+            if (err) {
+                return invokeCallback(cb, err);
             }
-
-            for (var i = 0; i < list.length; i++) {
-                cmds.push(list[i].replace(this.opts.prefix, ''));
-            }
-
-            if (cmds.length) {
-                this.redis.del(cmds, function (err, replies) {
+            if (uids && uids.length > 0) {
+                this.redis?.DEL(uids.concat(['onlines']), (err, replies) => {
                     invokeCallback(cb, err, replies);
-                });
+                })
             } else {
                 invokeCallback(cb, null, 0);
             }
@@ -87,6 +79,7 @@ export class StatusManager {
         if (!this.redis) {
             throw new Error('redis gone');
         }
+        await promisify(this.redis.hset.bind(this.redis))('onlines', uid, frontendId)
         return promisify(this.redis.hset.bind(this.redis))(uid, sid, frontendId);
     };
 
@@ -96,7 +89,7 @@ export class StatusManager {
         }
         const hdel = promisify(this.redis.hdel.bind(this.redis));
         //@ts-ignore
-        return await hdel(uid, sid);
+        return await hdel(uid, sid) && await hdel('onlines', uid);
     }
 
     async getSidsByUid(uid: string): Promise<{ [fronedId: string]: string[] }> {
