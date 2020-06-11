@@ -5,8 +5,8 @@ import { promisify } from "util";
 declare interface Application {
     get(key: string): any;
     set(...args: any[]): any;
-  }
-  
+}
+
 
 enum STATE {
     ST_INITED = 0,
@@ -128,4 +128,11 @@ export class StatusService {
             }
         }
     };
+
+    async getUids() { 
+        if (this.state !== STATE.ST_STARTED) {
+            throw new Error('invalid state');
+        }
+        return await this.manager.getUids();
+    }
 }

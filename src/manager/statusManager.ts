@@ -122,4 +122,11 @@ export class StatusManager {
         }
         return [];
     };
+
+    async getUids() {
+        if (!this.redis) {
+            throw new Error('redis gone');
+        }
+        return await promisify(this.redis.hkeys.bind(this.redis))('onlines');
+    }
 }

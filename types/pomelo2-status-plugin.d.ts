@@ -9,4 +9,5 @@ export interface StatusService {
     getFrontendIdsByUid(uid: string): Promise<string[]>;
     getStatusByUid(uid: string): Promise<boolean>;
     pushByUids(uids: string[], route: string, msg: any): Promise<any>;
+    getUids(): Promise<string[]>;
 }
