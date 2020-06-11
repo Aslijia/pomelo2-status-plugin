@@ -2,6 +2,7 @@
 import { RedisClient, createClient } from "redis";
 import { promisify } from "util";
 import { uniq } from 'lodash';
+import { getLogger } from 'pomelo2-logger';
 import { invokeCallback } from "../util/utils";
 
 declare interface Application {
@@ -58,6 +59,7 @@ export class StatusManager {
                 return invokeCallback(cb, err);
             }
             if (uids && uids.length > 0) {
+                getLogger('pomelo').warn('cleanup uids status', { uids });
                 this.redis?.DEL(uids.concat(['onlines']), (err, replies) => {
                     invokeCallback(cb, err, replies);
                 })
@@ -79,6 +81,7 @@ export class StatusManager {
         if (!this.redis) {
             throw new Error('redis gone');
         }
+        getLogger('pomelo').debug('add uid to status list', { uid, sid, frontendId });
         await promisify(this.redis.hset.bind(this.redis))('onlines', uid, frontendId)
         return promisify(this.redis.hset.bind(this.redis))(uid, sid, frontendId);
     };
@@ -87,6 +90,7 @@ export class StatusManager {
         if (!this.redis) {
             throw new Error('redis gone');
         }
+        getLogger('pomelo').debug('delete uid from status list', { uid, sid });
         const hdel = promisify(this.redis.hdel.bind(this.redis));
         //@ts-ignore
         return await hdel(uid, sid) && await hdel('onlines', uid);

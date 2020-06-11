@@ -1,6 +1,6 @@
 {
   "name": "pomelo2-status-plugin",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "",
   "main": "index.js",
   "files": [
@@ -24,6 +24,7 @@
   "homepage": "https://github.com/Aslijia/pomelo2-status-plugin#readme",
   "dependencies": {
     "lodash": "^4.17.15",
+    "pomelo2-logger": "^1.1.5",
     "redis": "^2.8.0"
   },
   "types": "./types/pomelo2-status-plugin.d.ts",
