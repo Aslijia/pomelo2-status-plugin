@@ -1,36 +1,36 @@
 {
-  "name": "pomelo2-status-plugin",
-  "version": "2.2.0",
-  "description": "",
-  "main": "index.js",
-  "files": [
-    "lib",
-    "types",
-    "index.js"
-  ],
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Aslijia/pomelo2-status-plugin.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Aslijia/pomelo2-status-plugin/issues"
-  },
-  "homepage": "https://github.com/Aslijia/pomelo2-status-plugin#readme",
-  "dependencies": {
-    "lodash": "^4.17.15",
-    "pomelo2-logger": "^1.1.5",
-    "redis": "^2.8.0"
-  },
-  "types": "./types/pomelo2-status-plugin.d.ts",
-  "devDependencies": {
-    "@types/lodash": "^4.14.149",
-    "@types/node": "^12.12.14",
-    "@types/redis": "^2.8.14"
-  }
+	"name": "pomelo2-status-plugin",
+	"version": "2.3.0",
+	"description": "",
+	"main": "index.js",
+	"files": [
+		"lib",
+		"types",
+		"index.js"
+	],
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Aslijia/pomelo2-status-plugin.git"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"bugs": {
+		"url": "https://github.com/Aslijia/pomelo2-status-plugin/issues"
+	},
+	"homepage": "https://github.com/Aslijia/pomelo2-status-plugin#readme",
+	"dependencies": {
+		"ioredis": "^4.27.4",
+		"lodash": "^4.17.15",
+		"pomelo2-logger": "^1.1.5"
+	},
+	"types": "./types/pomelo2-status-plugin.d.ts",
+	"devDependencies": {
+		"@types/ioredis": "^4.26.4",
+		"@types/lodash": "^4.14.149",
+		"@types/node": "^12.12.14"
+	}
 }
