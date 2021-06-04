@@ -1,5 +1,4 @@
 import RedisClient from 'ioredis'
-import { promisify } from 'util'
 import { uniq } from 'lodash'
 import { getLogger } from 'pomelo2-logger'
 import { invokeCallback } from '../util/utils'
@@ -26,20 +25,28 @@ export class StatusManager {
 	constructor(app: Application, opts: any) {
 		this.app = app
 		this.opts = opts
-		if (!this.opts.prefix) {
+
+		if (!this.opts.options) {
+			this.opts.options = {}
+		}
+
+		if (!this.opts.options.prefix) {
 			this.opts.prefix = DEFALT_PREFIX
 		}
 	}
 
 	start(cb: (...args: any[]) => void) {
-		this.redis = new RedisClient(this.opts)
+		this.redis = new RedisClient(this.opts.url, this.opts.options)
 		this.redis.on('error', function (err) {
 			logger.error('redis connection has error', {
 				pid: process.pid,
 				message: err.message,
 			})
 		})
-		this.redis.once('ready', cb)
+		this.redis.on('ready', () => {
+			logger.debug('redis ready', { pid: process.pid })
+			invokeCallback(cb)
+		})
 	}
 
 	stop(force: boolean, cb: Function) {

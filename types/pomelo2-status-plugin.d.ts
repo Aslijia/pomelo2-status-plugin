@@ -1,13 +1,11 @@
-
-
 export interface StatusService {
-    clean(cb: Function): void;
+	clean(cb: Function): void
 
-    add(uid: string, sid: string): Promise<any>;
-    leave(uid: string, sid: string): Promise<any>;
-    getSidsByUid(uid: string): Promise<string[]>;
-    getFrontendIdsByUid(uid: string): Promise<string[]>;
-    getStatusByUid(uid: string): Promise<boolean>;
-    pushByUids(uids: string[], route: string, msg: any): Promise<any>;
-    getUids(): Promise<string[]>;
+	add(uid: string, sid: string): Promise<any>
+	leave(uid: string, sid: string): Promise<any>
+	getSidsByUid(uid: string): Promise<string[]>
+	getFrontendIdsByUid(uid: string): Promise<string[]>
+	getStatusByUid(uid: string): Promise<boolean>
+	pushByUids(uids: string[], route: string, msg: any): Promise<any>
+	getUids(): Promise<string[]>
 }
