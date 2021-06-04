@@ -1,4 +1,4 @@
-import RedisClient from 'ioredis'
+import IORedis from 'ioredis'
 import { uniq } from 'lodash'
 import { getLogger } from 'pomelo2-logger'
 import { invokeCallback } from '../util/utils'
@@ -21,30 +21,31 @@ const logger = getLogger('statusplugin')
 export class StatusManager {
 	app: Application
 	opts: any
-	redis: RedisClient.Redis | undefined
+	redis: IORedis.Redis | undefined
 	constructor(app: Application, opts: any) {
 		this.app = app
 		this.opts = opts
 
 		if (!this.opts.options) {
-			this.opts.options = {}
-		}
-
-		if (!this.opts.options.prefix) {
-			this.opts.prefix = DEFALT_PREFIX
+			this.opts.options = { prefix: DEFALT_PREFIX }
 		}
 	}
 
 	start(cb: (...args: any[]) => void) {
-		this.redis = new RedisClient(this.opts.url, this.opts.options)
+		this.redis = new IORedis(this.opts.url, this.opts.options)
 		this.redis.on('error', function (err) {
 			logger.error('redis connection has error', {
 				pid: process.pid,
 				message: err.message,
 			})
 		})
+
 		this.redis.on('ready', () => {
-			logger.debug('redis ready', { pid: process.pid })
+			logger.debug('redis ready', {
+				pid: process.pid,
+				url: this.opts.url,
+				options: this.opts.options,
+			})
 			invokeCallback(cb)
 		})
 	}
@@ -62,56 +63,48 @@ export class StatusManager {
 			return invokeCallback(cb, new Error('redis gone'))
 		}
 
-		this.redis.hkeys('onlines', (err, uids) => {
-			if (err) {
-				return invokeCallback(cb, err)
-			}
-			if (uids && uids.length > 0) {
-				logger.warn('cleanup uids status', { uids })
-				this.redis?.del(uids.concat(['onlines']), (err, replies) => {
-					invokeCallback(cb, err, replies)
-				})
-			} else {
-				invokeCallback(cb, null, 0)
-			}
-		})
+		const uids = await this.redis.hkeys('onlines')
+		await this.redis.del('onlines')
+		if (uids && uids.length) {
+			await this.redis.del(...uids)
+		}
+		invokeCallback(cb)
 	}
 
-	async exists(uid: string) {
+	async exists(uid: string | number) {
 		if (!this.redis) {
 			throw new Error('redis gone')
 		}
-		return this.redis.exists(uid)
+		return await this.redis.exists(uid.toString())
 	}
 
-	async add(uid: string, sid: string, frontendId: string) {
+	async add(uid: string | number, sid: string, frontendId: string) {
 		if (!this.redis) {
 			throw new Error('redis gone')
 		}
-		logger.debug('add uid to status list', {
-			uid,
-			sid,
-			frontendId,
-		})
-		await this.redis.hset('onlines', uid, frontendId)
-		await this.redis.hset(uid, sid, frontendId)
+		await this.redis.hset('onlines', uid.toString(), frontendId)
+		await this.redis.hset(uid.toString(), sid, frontendId)
+		logger.debug('add uid to status list', { uid, sid, frontendId })
 	}
 
-	async leave(uid: string, sid: string) {
+	async leave(uid: string | number, sid: string) {
 		if (!this.redis) {
 			throw new Error('redis gone')
 		}
-		await this.redis.hdel(uid, sid)
-		await this.redis.hdel('onlines', uid)
+
+		await this.redis.hdel(uid.toString(), sid)
+		await this.redis.hdel('onlines', uid.toString())
 		logger.debug('delete uid from status list', { uid, sid })
 	}
 
-	async getSidsByUid(uid: string): Promise<{ [fronedId: string]: string[] }> {
+	async getSidsByUid(
+		uid: string | number
+	): Promise<{ [fronedId: string]: string[] }> {
 		if (!this.redis) {
 			throw new Error('redis gone')
 		}
 
-		const all = await this.redis.hgetall(uid)
+		const all = await this.redis.hgetall(uid.toString())
 		const kvs: { [fronedId: string]: string[] } = {}
 		for (let i in all) {
 			if (!kvs[all[i]]) {
@@ -122,12 +115,12 @@ export class StatusManager {
 		return kvs
 	}
 
-	async getFrontedIdsByUid(uid: string): Promise<string[]> {
+	async getFrontedIdsByUid(uid: string | number): Promise<string[]> {
 		if (!this.redis) {
 			throw new Error('redis gone')
 		}
 
-		const arrays = await this.redis.hvals(uid)
+		const arrays = await this.redis.hvals(uid.toString())
 		if (arrays && arrays.length) {
 			return uniq(arrays)
 		}
