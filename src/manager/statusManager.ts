@@ -27,7 +27,7 @@ export class StatusManager {
 		this.opts = opts
 
 		if (!this.opts.options) {
-			this.opts.options = { prefix: DEFALT_PREFIX }
+			this.opts.options = { keyPrefix: DEFALT_PREFIX }
 		}
 	}
 
@@ -97,9 +97,7 @@ export class StatusManager {
 		logger.debug('delete uid from status list', { uid, sid })
 	}
 
-	async getSidsByUid(
-		uid: string | number
-	): Promise<{ [fronedId: string]: string[] }> {
+	async getSidsByUid(uid: string | number) {
 		if (!this.redis) {
 			throw new Error('redis gone')
 		}
@@ -115,7 +113,7 @@ export class StatusManager {
 		return kvs
 	}
 
-	async getFrontedIdsByUid(uid: string | number): Promise<string[]> {
+	async getFrontedIdsByUid(uid: string | number) {
 		if (!this.redis) {
 			throw new Error('redis gone')
 		}
